@@ -56,7 +56,7 @@ def click_token(clicked_point):
     return clicked_point["x"], clicked_point["y"]
 
 
-def draw_dot(draw, point, fill, outline="white", radius=5):
+def draw_dot(draw, point, fill, outline="white", radius=2.5):
     x_value, y_value = point
 
     draw.ellipse(
