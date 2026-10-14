@@ -3,6 +3,7 @@ import io
 import zipfile
 import math
 import statistics
+from datetime import date
 
 import streamlit as st
 from PIL import Image, ImageDraw
@@ -443,3 +444,116 @@ if controls[2].button("Clear Everything"):
     st.session_state.measurements = []
     st.session_state.measurement_last_click = None
     st.rerun()
+
+# ---------------------------------------------------------
+# EXPORT INFORMATION
+# ---------------------------------------------------------
+
+st.divider()
+
+with st.expander("Export Inspection Package", expanded=False):
+
+    st.write(
+        "Add identifying information before downloading the "
+        "measurement package."
+    )
+
+    st.caption(
+        "Private preview: use non-confidential test information only."
+    )
+
+    export_columns_1 = st.columns(2)
+
+    defect_name = export_columns_1[0].text_input(
+        "Defect or source name",
+        placeholder="Example: Hood fiber"
+    )
+
+    date_collected = export_columns_1[1].date_input(
+        "Date collected",
+        value=date.today()
+    )
+
+    export_columns_2 = st.columns(2)
+
+    unique_identifier = export_columns_2[0].text_input(
+        "Carrier / PVI / VIN / unique identifier",
+        placeholder="Enter identifier"
+    )
+
+    paint_booth = export_columns_2[1].selectbox(
+        "Paint booth",
+        [
+            "Primer",
+            "Booth 1",
+            "Booth 2",
+            "Booth 3",
+            "Booth 4",
+            "Booth 5",
+            "Booth 6",
+            "Booth 7",
+            "Booth 8",
+            "Booth 9",
+            "Booth 10",            
+        ]
+    )
+
+    export_columns_3 = st.columns(2)
+
+    vehicle_panel = export_columns_3[0].selectbox(
+        "Vehicle panel",
+        [
+            "Not specified",
+            "Hood",
+            "Roof",
+            "Decklid",
+            "Left front door",
+            "Right front door",
+            "Left rear door",
+            "Right rear door",
+            "Left fender",
+            "Right fender",
+            "Quarter panel",
+            "Other"
+        ]
+    )
+
+    shift = export_columns_3[1].selectbox(
+        "Shift",
+        [
+            "Not specified",
+            "1st",
+            "2nd",
+            "3rd"
+        ]
+    )
+
+    export_columns_4 = st.columns(2)
+
+    analyst_name = export_columns_4[0].text_input(
+        "Analyst or operator",
+        placeholder="Optional"
+    )
+
+    suspected_source = export_columns_4[1].text_input(
+        "Suspected source",
+        placeholder="Optional"
+    )
+
+    export_notes = st.text_area(
+        "Notes",
+        placeholder=(
+            "Add location details, appearance, investigation notes, "
+            "or other useful context."
+        )
+    )
+
+    package_name = st.text_input(
+        "Download file name",
+        value="microscope_measurement"
+    )
+
+    st.info(
+        "The download button will appear here after the ZIP-building "
+        "code is added."
+    )
