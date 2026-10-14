@@ -494,7 +494,8 @@ with st.expander("Export Inspection Package", expanded=False):
             "Booth 7",
             "Booth 8",
             "Booth 9",
-            "Booth 10",            
+            "Booth 10",
+            "Not Applicable"
         ]
     )
 
@@ -514,7 +515,8 @@ with st.expander("Export Inspection Package", expanded=False):
             "Left fender",
             "Right fender",
             "Quarter panel",
-            "Other"
+            "Other",
+            "Direct Material Sample"
         ]
     )
 
