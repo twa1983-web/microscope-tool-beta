@@ -502,7 +502,7 @@ with st.expander("Export Inspection Package", expanded=False):
     export_columns_3 = st.columns(2)
 
     vehicle_panel = export_columns_3[0].selectbox(
-        "Vehicle panel",
+        "Vehicle panel or Sample Type",
         [
             "Not specified",
             "Hood",
@@ -516,7 +516,9 @@ with st.expander("Export Inspection Package", expanded=False):
             "Right fender",
             "Quarter panel",
             "Other",
-            "Direct Material Sample"
+            "Direct Material Sample",
+            "Vendor Sample",
+            "Booth Environmental Sample"
         ]
     )
 
