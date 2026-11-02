@@ -557,7 +557,294 @@ with st.expander("Export Inspection Package", expanded=False):
         value="microscope_measurement"
     )
 
-    st.info(
-        "The download button will appear here after the ZIP-building "
-        "code is added."
-    )
+        # -----------------------------------------------------
+    # BUILD THE INSPECTION PACKAGE
+    # -----------------------------------------------------
+
+    if not st.session_state.measurements:
+
+        st.warning(
+            "Complete at least one measurement before downloading "
+            "an inspection package."
+        )
+
+    else:
+
+        # Convert every stored pixel measurement using the
+        # currently active calibration.
+        export_micron_values = [
+            measurement["pixels"] * microns_per_pixel
+            for measurement in st.session_state.measurements
+        ]
+
+        export_count = len(export_micron_values)
+
+        export_mean = statistics.mean(
+            export_micron_values
+        )
+
+        export_median = statistics.median(
+            export_micron_values
+        )
+
+        export_minimum = min(
+            export_micron_values
+        )
+
+        export_maximum = max(
+            export_micron_values
+        )
+
+        if export_count >= 2:
+
+            export_standard_deviation = statistics.stdev(
+                export_micron_values
+            )
+
+        else:
+
+            export_standard_deviation = 0.0
+
+
+        # -------------------------------------------------
+        # CREATE A SAFE DOWNLOAD NAME
+        # -------------------------------------------------
+
+        requested_name = package_name.strip()
+
+        if not requested_name:
+
+            requested_name = "microscope_measurement"
+
+        safe_package_name = "".join(
+            character
+            if character.isalnum() or character in "-_"
+            else "_"
+            for character in requested_name
+        )
+
+        safe_package_name = safe_package_name.strip("_")
+
+        if not safe_package_name:
+
+            safe_package_name = "microscope_measurement"
+
+
+        # -------------------------------------------------
+        # CREATE THE CSV IN MEMORY
+        # -------------------------------------------------
+
+        csv_text = io.StringIO()
+
+        csv_fieldnames = [
+            "Record ID",
+            "Date Collected",
+            "Defect or Source Name",
+            "Unique Identifier",
+            "Paint Booth",
+            "Panel or Sample Type",
+            "Shift",
+            "Analyst or Operator",
+            "Suspected Source",
+            "Notes",
+            "Original Image",
+            "Calibration Microns per Pixel",
+            "Measurement Number",
+            "Pixel Distance",
+            "Measured Microns",
+            "Measurement Count",
+            "Mean Microns",
+            "Median Microns",
+            "Minimum Microns",
+            "Maximum Microns",
+            "Standard Deviation Microns",
+            "Point 1",
+            "Point 2",
+        ]
+
+        csv_writer = csv.DictWriter(
+            csv_text,
+            fieldnames=csv_fieldnames
+        )
+
+        csv_writer.writeheader()
+
+        for measurement_number, measurement in enumerate(
+            st.session_state.measurements,
+            start=1
+        ):
+
+            measured_microns = (
+                measurement["pixels"]
+                * microns_per_pixel
+            )
+
+            csv_writer.writerow(
+                {
+                    "Record ID": safe_package_name,
+                    "Date Collected": date_collected.isoformat(),
+                    "Defect or Source Name": defect_name,
+                    "Unique Identifier": unique_identifier,
+                    "Paint Booth": paint_booth,
+                    "Panel or Sample Type": vehicle_panel,
+                    "Shift": shift,
+                    "Analyst or Operator": analyst_name,
+                    "Suspected Source": suspected_source,
+                    "Notes": export_notes,
+                    "Original Image": measurement_file.name,
+                    "Calibration Microns per Pixel": (
+                        f"{microns_per_pixel:.6f}"
+                    ),
+                    "Measurement Number": measurement_number,
+                    "Pixel Distance": (
+                        f"{measurement['pixels']:.4f}"
+                    ),
+                    "Measured Microns": (
+                        f"{measured_microns:.4f}"
+                    ),
+                    "Measurement Count": export_count,
+                    "Mean Microns": f"{export_mean:.4f}",
+                    "Median Microns": f"{export_median:.4f}",
+                    "Minimum Microns": f"{export_minimum:.4f}",
+                    "Maximum Microns": f"{export_maximum:.4f}",
+                    "Standard Deviation Microns": (
+                        f"{export_standard_deviation:.4f}"
+                    ),
+                    "Point 1": str(measurement["point_1"]),
+                    "Point 2": str(measurement["point_2"]),
+                }
+            )
+
+        csv_bytes = csv_text.getvalue().encode(
+            "utf-8-sig"
+        )
+
+
+        # -------------------------------------------------
+        # CREATE THE ANNOTATED PNG IN MEMORY
+        # -------------------------------------------------
+
+        annotated_image_buffer = io.BytesIO()
+
+        marked_measurement_image.save(
+            annotated_image_buffer,
+            format="PNG"
+        )
+
+        annotated_image_bytes = (
+            annotated_image_buffer.getvalue()
+        )
+
+
+        # -------------------------------------------------
+        # CREATE A SMALL THUMBNAIL IN MEMORY
+        # -------------------------------------------------
+
+        thumbnail_image = (
+            marked_measurement_image.copy()
+        )
+
+        thumbnail_image.thumbnail(
+            (400, 400)
+        )
+
+        thumbnail_buffer = io.BytesIO()
+
+        thumbnail_image.save(
+            thumbnail_buffer,
+            format="PNG"
+        )
+
+        thumbnail_bytes = thumbnail_buffer.getvalue()
+
+
+        # -------------------------------------------------
+        # CREATE THE SUMMARY TEXT FILE
+        # -------------------------------------------------
+
+        summary_text = (
+            "MICROSCOPE MEASUREMENT INSPECTION PACKAGE\n"
+            "=========================================\n\n"
+            f"Record ID: {safe_package_name}\n"
+            f"Date collected: {date_collected.isoformat()}\n"
+            f"Defect or source name: {defect_name}\n"
+            f"Unique identifier: {unique_identifier}\n"
+            f"Paint booth: {paint_booth}\n"
+            f"Panel or sample type: {vehicle_panel}\n"
+            f"Shift: {shift}\n"
+            f"Analyst or operator: {analyst_name}\n"
+            f"Suspected source: {suspected_source}\n"
+            f"Original image: {measurement_file.name}\n"
+            f"Calibration: {microns_per_pixel:.6f} µm/pixel\n\n"
+            "MEASUREMENT SUMMARY\n"
+            "-------------------\n"
+            f"Measurement count: {export_count}\n"
+            f"Mean: {export_mean:.4f} µm\n"
+            f"Median: {export_median:.4f} µm\n"
+            f"Minimum: {export_minimum:.4f} µm\n"
+            f"Maximum: {export_maximum:.4f} µm\n"
+            f"Standard deviation: "
+            f"{export_standard_deviation:.4f} µm\n\n"
+            "NOTES\n"
+            "-----\n"
+            f"{export_notes or 'No notes entered.'}\n\n"
+            "PRIVATE PREVIEW\n"
+            "---------------\n"
+            "Results depend on calibration accuracy, image "
+            "quality, and endpoint selection. Verify critical "
+            "measurements using an approved method.\n"
+        )
+
+
+        # -------------------------------------------------
+        # PACKAGE EVERYTHING INTO ONE ZIP FILE
+        # -------------------------------------------------
+
+        zip_buffer = io.BytesIO()
+
+        with zipfile.ZipFile(
+            zip_buffer,
+            mode="w",
+            compression=zipfile.ZIP_DEFLATED
+        ) as inspection_zip:
+
+            inspection_zip.writestr(
+                "measurements.csv",
+                csv_bytes
+            )
+
+            inspection_zip.writestr(
+                "annotated_defect.png",
+                annotated_image_bytes
+            )
+
+            inspection_zip.writestr(
+                "defect_thumbnail.png",
+                thumbnail_bytes
+            )
+
+            inspection_zip.writestr(
+                "summary.txt",
+                summary_text.encode("utf-8")
+            )
+
+        zip_bytes = zip_buffer.getvalue()
+
+
+        # -------------------------------------------------
+        # DOWNLOAD BUTTON
+        # -------------------------------------------------
+
+        st.success(
+            f"Package ready: {export_count} measurements, "
+            f"mean {export_mean:.2f} µm."
+        )
+
+        st.download_button(
+            label="Download Inspection Package",
+            data=zip_bytes,
+            file_name=f"{safe_package_name}.zip",
+            mime="application/zip",
+            type="primary",
+            use_container_width=True
+        )
