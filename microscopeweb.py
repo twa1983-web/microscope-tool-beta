@@ -17,6 +17,7 @@ st.set_page_config(
 )
 
 st.title("🔬 Microscope Tool")
+st.caption("Version 1.0 candidate")
 
 
 # ---------------------------------------------------------
@@ -29,10 +30,12 @@ def initialize_state():
         "calibration_points": [],
         "calibration_last_click": None,
         "calibration_file_id": None,
+        "calibration_widget_version": 0,
         "measurement_points": [],
         "measurements": [],
         "measurement_last_click": None,
         "measurement_file_id": None,
+        "measurement_widget_version": 0,
     }
 
     for name, value in defaults.items():
@@ -158,7 +161,7 @@ if mode == "Calibrate Scope":
 
     calibration_click = streamlit_image_coordinates(
         marked_calibration_image,
-        key="calibration_image",
+        key=f"calibration_image_{st.session_state.calibration_widget_version}",
         cursor="crosshair",
     )
 
@@ -249,6 +252,7 @@ if mode == "Calibrate Scope":
     if st.button("Reset Calibration Points"):
         st.session_state.calibration_points = []
         st.session_state.calibration_last_click = None
+        st.session_state.calibration_widget_version += 1
         st.rerun()
 
     st.stop()
@@ -281,6 +285,7 @@ if current_measurement_file_id != st.session_state.measurement_file_id:
     st.session_state.measurement_points = []
     st.session_state.measurements = []
     st.session_state.measurement_last_click = None
+    st.session_state.measurement_widget_version += 1
 
 microns_per_pixel = st.number_input(
     "Active calibration in µm per pixel",
@@ -334,7 +339,7 @@ if len(st.session_state.measurement_points) == 1:
 
 measurement_click = streamlit_image_coordinates(
     marked_measurement_image,
-    key="measurement_image",
+    key=f"measurement_image_{st.session_state.measurement_widget_version}",
     cursor="crosshair",
 )
 
@@ -437,12 +442,14 @@ if controls[0].button("Undo Last Measurement"):
 if controls[1].button("Cancel Current Point"):
     st.session_state.measurement_points = []
     st.session_state.measurement_last_click = None
+    st.session_state.measurement_widget_version += 1
     st.rerun()
 
 if controls[2].button("Clear Everything"):
     st.session_state.measurement_points = []
     st.session_state.measurements = []
     st.session_state.measurement_last_click = None
+    st.session_state.measurement_widget_version += 1
     st.rerun()
 
 # ---------------------------------------------------------
